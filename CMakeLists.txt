@@ -3,11 +3,8 @@ set(CMAKE_CUDA_ARCHITECTURES 60)
 project(volume-renderer LANGUAGES CXX CUDA)
 
 add_subdirectory( external/stb )
-message(STB_LIB_HEADERS="${STB_LIB_HEADERS}")
 
-set( SOURCE_FILES
-	src/main.cu
-)
+file( GLOB_RECURSE SOURCE_FILES * )
 add_executable( ${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
 target_link_libraries( ${CMAKE_PROJECT_NAME}
 	PRIVATE stb
