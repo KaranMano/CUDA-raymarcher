@@ -15,14 +15,26 @@ __global__ void renderVolume(unsigned char *image, Camera cam) {
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
-    //Ray ray = cam.getRay(row, col);
+    Ray ray = cam.getRay(row, col);
     image[(col + cam.imageCols * row) * 3 + 0] = 255;//ray.origin.x;
-    image[(col + cam.imageCols * row) * 3 + 1] = 255;//ray.origin.y;
-    image[(col + cam.imageCols * row) * 3 + 2] = 255;//ray.origin.z;
+    image[(col + cam.imageCols * row) * 3 + 1] = ray.origin.y;
+    image[(col + cam.imageCols * row) * 3 + 2] = ray.origin.z;
 }
 
 int main() {
-    Camera cam;
+    std::cout << "rendering volume\n";
+    Vector position(0.0f, 0.0f, 1.0f); 
+    Vector view(0.0f, 0.0f, -1.0f);
+    Vector up(0.0f, 1.0f, 0.0f);
+    Camera cam(
+        position, 
+        view, 
+        up, 
+        100,
+        IMAGE_SIZE,
+        IMAGE_SIZE
+    );
+
     dim3 gridDim(std::ceil(IMAGE_SIZE / BLOCK_SIZE), std::ceil(IMAGE_SIZE / BLOCK_SIZE));
     dim3 blockDim(BLOCK_SIZE, BLOCK_SIZE);
     

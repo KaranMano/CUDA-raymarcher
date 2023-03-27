@@ -1,4 +1,3 @@
-#pragma once
 #include "camera.h"
 		
 __host__ __device__ Camera::Camera() : 

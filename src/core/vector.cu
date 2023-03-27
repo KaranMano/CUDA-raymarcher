@@ -84,9 +84,9 @@ __host__ __device__ Vector cross(const Vector& lhs, const Vector &rhs) {
 	};
 }
 __host__ __device__ float dot(const Vector& lhs, const Vector &rhs) {
-	return ( 
+	return (
 		lhs.x * rhs.x
-		+ lhs.y * rhs.y,
+		+ lhs.y * rhs.y
 		+ lhs.z * rhs.z
 	);
 }

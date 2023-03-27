@@ -1,6 +1,4 @@
-#pragma once
 #include "ray.h"
-
 
 __host__ __device__ Ray::Ray() :
 	origin(),
