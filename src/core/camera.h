@@ -1,23 +1,34 @@
 #pragma once
 #include "vector.h"
 #include "ray.h"
+#include <cmath>
 #include <cuda_runtime.h>
+#include <random>
+#include <iostream>
 
 class Camera {
-	public:
-		Vector position, view, up; // up and view should be perpendicular
-		int imageRows, imageCols;
-		float near;
-		
-		__host__ __device__ Camera();
-		__host__ __device__ Camera(
-				const Vector &_position, 
-				const Vector &_view, 
-				const Vector &_up, 
-				float _near,
-				int _imageCols,
-				int _imageRows
-		);
+private: 
+	int m_imageHeight, m_imageWidth;
+	float m_fov;
+	Vector m_position, m_view, m_up; // up and view should be perpendicular
+	const float IMAGE_PLANE_DISTANCE = 1.0f;
+public:
 
-		__host__ __device__ Ray getRay(int row, int col);
+	  Camera();
+	  Camera(
+		const Vector &_position,
+		const Vector &_view,
+		const Vector &_up,
+		int _imageWidth,
+		int _imageHeight,
+		float _fov
+	);
+
+	 Ray ray(int row, int col) const;
+	 int height() const;
+	 int width() const;
+	 float fov() const;
+	 const Vector& position() const;
+	 const Vector& view() const;
+	 const Vector& up() const;
 };

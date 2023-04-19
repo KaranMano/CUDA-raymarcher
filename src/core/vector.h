@@ -1,29 +1,35 @@
 #pragma once
+#include <fstream>
 #include <cuda_runtime.h>
+#include <cmath>
 
 class Vector {
-	public:
-		float x, y, z;
-		__host__ __device__ Vector();
-		__host__ __device__ Vector(const float &_x, const float &_y, const float &_z);
-		__host__ __device__ Vector(const Vector &v);
+public:
+	float x, y, z;
+	Vector();
+	Vector(const float &_x, const float &_y, const float &_z);
+	Vector(const Vector &v);
 
-		__host__ __device__ Vector operator-() const;
-		__host__ __device__ Vector& operator+=(const Vector& rhs);
-		__host__ __device__ Vector& operator-=(const Vector& rhs);
-		__host__ __device__ Vector& operator/=(const Vector& rhs);
-		__host__ __device__ Vector& operator*=(const Vector& rhs);
-		__host__ __device__ Vector& operator*=(float scalar);
+	friend std::ostream& operator<<(std::ostream& os, const Vector& v);
+	Vector operator-() const;
+	Vector& operator+=(const Vector& rhs);
+	Vector& operator-=(const Vector& rhs);
+	Vector& operator/=(const Vector& rhs);
+	Vector& operator*=(const Vector& rhs);
+	Vector& operator/=(float scalar);
+	Vector& operator*=(float scalar);
 
-		__host__ __device__ Vector& operator=(const Vector& rhs);
-		__host__ __device__ Vector operator+(const Vector& rhs) const;
-		__host__ __device__ Vector operator-(const Vector& rhs) const;
-		__host__ __device__ Vector operator*(const Vector& rhs) const;
-		__host__ __device__ Vector operator/(const Vector& rhs) const;
-		
-		__host__ __device__ Vector operator*(float scalar) const;
-		__host__ __device__ friend Vector operator*(float scalar, const Vector& rhs);
+	Vector& operator=(const Vector& rhs);
+	Vector operator+(const Vector& rhs) const;
+	Vector operator-(const Vector& rhs) const;
+	Vector operator*(const Vector& rhs) const;
+	Vector operator/(const Vector& rhs) const;
+
+	Vector operator*(float scalar) const;
+	friend Vector operator*(float scalar, const Vector& rhs);
 };
 
-__host__ __device__ Vector cross(const Vector& lhs, const Vector &rhs);
-__host__ __device__ float dot(const Vector& lhs, const Vector &rhs);
+Vector cross(const Vector& lhs, const Vector &rhs);
+float dot(const Vector& lhs, const Vector &rhs);
+Vector normalize(const Vector& v);
+float length(const Vector& v);
