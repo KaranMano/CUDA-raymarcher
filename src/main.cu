@@ -66,7 +66,7 @@ void renderScene(unsigned char *image, const Scene& scene, int offset, int band)
 int main() {
 	if (!glfwInit())
 		return -1;
-	
+
 	const char* glsl_version = "#version 130";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -102,10 +102,9 @@ int main() {
 	image = (unsigned char *)malloc(scene.camera().width() * scene.camera().height() * CHANNELS * sizeof(unsigned char));
 
 	bool render = false;
-	int spans = 10;
-	int currSpan = 0;
 	int steps = 8;
-	int band = scene.camera().width() / (steps * spans);
+	int band = scene.camera().width() / steps;
+	std::vector<std::future<void>> jobs;
 	GLuint texture;
 	bool isAvailable = false;
 	while (!glfwWindowShouldClose(window)) {
@@ -129,19 +128,13 @@ int main() {
 			}
 			if (ImGui::Button("render")) {
 				render = true;
+				for (int step = 0; step < steps; step++) {
+					jobs.emplace_back(std::async(std::launch::async, renderScene, image, scene, step * band, band));
+				}
 			}
 			ImGui::End();
 		}
 		if (render) {
-			std::cout << "rendering volume\n";
-			int offset = currSpan * ((float)scene.camera().width() / spans);
-			std::vector<std::future<void>> jobs;
-			for (int i = 0; i < steps; i++, offset += band) {
-				jobs.emplace_back(std::async(std::launch::async, renderScene, image, scene, offset, band));
-			}
-			for (auto& job : jobs)
-				job.get();
-
 			if (isAvailable) {
 				glDeleteTextures(1, &texture);
 				isAvailable = false;
@@ -156,11 +149,14 @@ int main() {
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			isAvailable = true;
-			currSpan++;
-			stbi_write_png("render.png", scene.camera().width(), scene.camera().height(), CHANNELS, image, scene.camera().width() * CHANNELS);
-			if (currSpan == spans) {
-				currSpan = 0;
+			bool isRenderComplete = true;
+			for (auto &job : jobs) {
+				using namespace std::chrono_literals;
+				isRenderComplete &= (job.wait_for(0s) == std::future_status::ready);
+			}
+			if (isRenderComplete) {
 				render = false;
+				stbi_write_png("render.png", scene.camera().width(), scene.camera().height(), CHANNELS, image, scene.camera().width() * CHANNELS);
 			}
 		}
 
