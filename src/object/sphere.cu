@@ -40,7 +40,7 @@ float Sphere::intersect(const Ray& ray) const {
 }
 
 Vector Sphere::normal(const Vector &point) const {
-	return point - position();
+	return normalize(point - position());
 }
 float Sphere::radius() {
 	return m_radius;
