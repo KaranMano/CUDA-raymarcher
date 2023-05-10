@@ -5,20 +5,36 @@
 #include "camera.h"
 #include <memory>
 
+#define MAX 1024
+
 class Scene {
 private:
-	std::vector<std::shared_ptr<Object>> m_objects;
-	std::vector<std::shared_ptr<Light>> m_lights;
+	int m_numberOfObjects, m_numberOfLights;
+	Object* m_objects[MAX];
+	Material* m_materials[MAX];
+	Light* m_lights[MAX];
 	Camera m_camera;
 	Vector m_background;
 public:
-	Scene();
+	__host__ __device__
+		Scene();
+	__host__ __device__
+		Scene(int _width, int _height);
 
-	const std::vector<std::shared_ptr<Object>>& objects() const;
-	const std::vector<std::shared_ptr<Light>>& lights() const;
-	const Camera& camera() const;
-	void cast(Ray& ray) const;
-	void add(const std::shared_ptr<Light>& light);
-	void add(const std::shared_ptr<Object>& object);
-	const Vector& background() const;
+	__host__ __device__
+		Object** objects();
+	__host__ __device__
+		Light** lights();
+	__host__ __device__
+		Material** materials();
+	__host__ __device__
+		const Camera& camera() const;
+	__host__ __device__
+		void cast(Ray& ray) const;
+	__host__ __device__
+		void add(Light* light);
+	__host__ __device__
+		void add(Object* object, Material* material);
+	__host__ __device__
+		const Vector& background() const;
 };

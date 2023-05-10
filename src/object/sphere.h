@@ -8,8 +8,12 @@ class Sphere : public Object {
 private:
 	float m_radius;
 public:
-	 Sphere(const Vector &_position, float _radius, const std::shared_ptr<Material>& _material, bool _volume);
-	 float intersect(const Ray& ray) const override;
-	 Vector normal(const Vector &point) const override;
-	 float radius();
+	__host__ __device__
+		Sphere(const Vector &_position, float _radius, bool _volume);
+	__host__ __device__
+		float intersect(const Ray& ray) const override;
+	__host__ __device__
+		Vector normal(const Vector &point) const override;
+	__host__ __device__
+		float radius();
 };

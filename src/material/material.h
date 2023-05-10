@@ -9,9 +9,12 @@ class Scene;
 
 class Material {
 protected:
+	__host__ __device__
 	Material();
+	__host__ __device__
 	Material(const Material &other);
 
 public:
-	virtual Vector shade(Ray& ray, const Object& object, const Scene& scene) const = 0;
+	__host__ __device__
+	virtual Vector shade(Ray& ray, const Object& object, Scene& scene) const = 0;
 };

@@ -1,10 +1,12 @@
 #include "sphere.h"
 
-Sphere::Sphere(const Vector &_position, float _radius, const std::shared_ptr<Material>& _material, bool _volume) :
-	Object(_material, _position, _volume),
+__host__ __device__
+Sphere::Sphere(const Vector &_position, float _radius, bool _volume) :
+	Object(_position, _volume),
 	m_radius(_radius)
 {}
 
+__host__ __device__
 float Sphere::intersect(const Ray& ray) const {
 	float a = dot(ray.direction(), ray.direction());
 	float b = 2 * dot(ray.origin() - this->position(), ray.direction());
@@ -39,9 +41,11 @@ float Sphere::intersect(const Ray& ray) const {
 	return t;
 }
 
+__host__ __device__
 Vector Sphere::normal(const Vector &point) const {
 	return normalize(point - position());
 }
+__host__ __device__
 float Sphere::radius() {
 	return m_radius;
 }

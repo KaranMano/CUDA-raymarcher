@@ -10,58 +10,9 @@
 #include <cmath>
 #include <algorithm>
 #include <stb_image_write.h>
-#include <cuda_runtime.h>
-#include <future>
 
-#include "core/camera.h"
-#include "core/scene.h"
-#include "core/vector.h"
-#include "object/sphere.h"
-#include "material/material.h"
-#include "material/phong.h"
-#include "material/volume.h"
-#include "main.h"
+#include "utils.h"
 #include <random>
-
-#define IMAGE_SIZE 1080
-#define CHANNELS 3
-#define BLOCK_SIZE 16
-
-// 1pt corresponds to 1m
-unsigned char clamp(int value) {
-	if (value > 255)
-		return 255;
-	else if (value < 0)
-		return 0;
-	else
-		return value;
-}
-
-Vector renderPixel(int row, int col, const Scene& scene) {
-	Ray ray = scene.camera().ray(row, col);
-	scene.cast(ray);
-	if (ray.intersected() == nullptr)
-		return scene.background();
-	else {
-		return ray.intersected()->color(ray, scene);
-	}
-}
-
-void renderScene(unsigned char *image, const Scene& scene, int offset, int band) {
-	for (int row = 0; row < scene.camera().height(); row++)
-		for (int col = offset; col < offset + band; col++)
-		{
-			int samples = 1;
-			Vector color;
-			for (int i = 0; i <= samples; i++) {
-				color += renderPixel(row, col, scene);
-			}
-			color /= samples;
-			image[(col + scene.camera().width() * row) * 3 + 0] = clamp(color.x * 255);
-			image[(col + scene.camera().width() * row) * 3 + 1] = clamp(color.y * 255);
-			image[(col + scene.camera().width() * row) * 3 + 2] = clamp(color.z * 255);
-		}
-}
 
 int main() {
 	if (!glfwInit())
@@ -88,15 +39,11 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
-	std::shared_ptr<Material> purple(new Phong({ 0.1f, 0.4f, 0.5f }));
-	std::shared_ptr<Material> blue(new Phong({ 0.243f, 0.752f, 0.678f }));
-	std::shared_ptr<Material> volume(new Volume({ 1.0f, 1.0f, 1.0f }));
+	Volume volume({ 1.0f, 1.0f, 1.0f });
 
-	Scene scene;
-	scene.add(std::shared_ptr<Object>(new Sphere({ 0.0f, 0.0f, -10.0f }, 3.0f, volume, true)));
-	scene.add(std::shared_ptr<Object>(new Sphere({ -5.0f, 5.0f, -10.0f }, 2.0f, purple, false)));
-	scene.add(std::shared_ptr<Object>(new Sphere({ 1.0f, 1.0f, -4.0f }, 0.5f, blue, false)));
-	scene.add(std::shared_ptr<Light>(new Light({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 10.0)));
+	Scene scene(1080, 1080);
+	scene.add((Object*)new Sphere({ 0.0f, 0.0f, -10.0f }, 6.0f, true), (Material*)&volume);
+	scene.add(new Light({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 10.0));
 
 	unsigned char *image, *d_image;
 	image = (unsigned char *)malloc(scene.camera().width() * scene.camera().height() * CHANNELS * sizeof(unsigned char));
@@ -106,7 +53,7 @@ int main() {
 	int band = scene.camera().width() / steps;
 	std::vector<std::future<void>> jobs;
 	GLuint texture;
-	bool isAvailable = false;
+	bool isAvailable = false, isGPU = false;
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
@@ -117,6 +64,56 @@ int main() {
 		ImGui::DockSpaceOverViewport();
 
 		{
+			ImGui::Begin("Controls");
+			if (ImGui::Button("Save"))
+				stbi_write_png("render.png", scene.camera().width(), scene.camera().height(), CHANNELS, image, scene.camera().width() * CHANNELS);
+			ImGui::Checkbox("GPU", &isGPU);
+			if (ImGui::Button("Render")) {
+				memset(image, 0, scene.camera().width() * scene.camera().height()* CHANNELS);
+				render = true;
+				if (!isGPU) {
+					for (int step = 0; step < steps; step++) {
+						jobs.emplace_back(std::async(std::launch::async, renderScene, image, scene, step * band, band));
+					}
+				}
+				else {
+					Scene dummy(1080, 1080), *d_scene;
+					cudaMalloc(&d_scene, sizeof(dummy));
+					cudaMemcpy(d_scene, &dummy, sizeof(dummy), cudaMemcpyHostToDevice);
+					cudaMalloc(&d_image, scene.camera().height()* scene.camera().width() * CHANNELS);
+					
+					setupKernel << <1, 1 >> > (d_scene);
+					checkCudaErrors(cudaDeviceSynchronize());
+					launchKernel << <1, 1 >> > (d_image, d_scene, 16);
+					checkCudaErrors(cudaDeviceSynchronize());
+					cleanupKernel << <1, 1 >> > (d_scene);
+					checkCudaErrors(cudaDeviceSynchronize());
+
+					cudaMemcpy(image, d_image, scene.camera().height()* scene.camera().width() * CHANNELS, cudaMemcpyDeviceToHost);
+					cudaFree(d_image);
+					cudaFree(d_scene);
+
+					if (isAvailable) {
+						glDeleteTextures(1, &texture);
+						isAvailable = false;
+					}
+
+					glGenTextures(1, &texture);
+					glBindTexture(GL_TEXTURE_2D, texture);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene.camera().width(), scene.camera().height(), 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+					glBindTexture(GL_TEXTURE_2D, 0);
+					isAvailable = true;
+					render = false;
+				}
+			}
+
+			ImGui::End();
+		}
+
+		{
 			ImGui::Begin("Result");
 			if (isAvailable) {
 				ImVec2 winSize = ImGui::GetWindowSize();
@@ -125,12 +122,6 @@ int main() {
 					reinterpret_cast<void*>(static_cast<intptr_t>(texture)),
 					ImVec2(scene.camera().width() * scaleFactor, scene.camera().height() * scaleFactor)
 				);
-			}
-			if (ImGui::Button("render")) {
-				render = true;
-				for (int step = 0; step < steps; step++) {
-					jobs.emplace_back(std::async(std::launch::async, renderScene, image, scene, step * band, band));
-				}
 			}
 			ImGui::End();
 		}
@@ -156,7 +147,6 @@ int main() {
 			}
 			if (isRenderComplete) {
 				render = false;
-				stbi_write_png("render.png", scene.camera().width(), scene.camera().height(), CHANNELS, image, scene.camera().width() * CHANNELS);
 			}
 		}
 
@@ -169,7 +159,25 @@ int main() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(window);
 	}
+
 	glfwTerminate();
 	free(image);
+	int i = 0;
+	while (scene.objects()[i] != nullptr) {
+		delete scene.objects()[i];
+		scene.objects()[i] = nullptr;
+		if (scene.materials()[i] != nullptr) // can be shared
+		{
+			delete scene.materials()[i];
+			scene.materials()[i] = nullptr;
+		}
+		i++;
+	}
+	i = 0;
+	while (scene.lights()[i] != nullptr) {
+		delete scene.lights()[i];
+		scene.lights()[i] = nullptr;
+		i++;
+	}
 	return 0;
 }

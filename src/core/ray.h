@@ -10,20 +10,30 @@ class Object;
 class Ray {
 private:
 	Vector m_origin, m_direction;
-	std::shared_ptr<Object> m_interected;
+	int m_interected;
 	float m_hit;
 
 public:
 
+	__host__ __device__
 	Ray();
+	__host__ __device__
 	Ray(const Vector &_origin, const Vector &_direction);
 
+	__host__ __device__
 	float param() const;
+	__host__ __device__
 	Vector hit() const;
-	void hit(float _hit, const std::shared_ptr<Object>& object);
+	__host__ __device__
+	void hit(float _hit, int object);
+	__host__ __device__
 	void reset();
+	__host__ __device__
 	const Vector& origin() const;
+	__host__ __device__
 	void origin(const Vector& v);
+	__host__ __device__
 	const Vector& direction() const;
-	const std::shared_ptr<Object>& intersected() const;
+	__host__ __device__
+	int intersected() const;
 };

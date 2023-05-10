@@ -1,46 +1,56 @@
 #include "vector.h"
 
+__host__ __device__
 Vector::Vector() : x(), y(), z() {};
+__host__ __device__
 Vector::Vector(const float &_x, const float &_y, const float &_z) : x(_x), y(_y), z(_z) {};
+__host__ __device__
 Vector::Vector(const Vector &v) : x(v.x), y(v.y), z(v.z) {};
 
 std::ostream& operator<<(std::ostream& os, const Vector& v) {
 	os << "( " << v.x << ", " << v.y << ", " << v.z << ")";
 	return os;
 }
+__host__ __device__
 Vector Vector::operator-() const {
 	return { -x, -y, -z };
 }
+__host__ __device__
 Vector& Vector::operator+=(const Vector& rhs) {
 	x += rhs.x;
 	y += rhs.y;
 	z += rhs.z;
 	return *this;
 }
+__host__ __device__
 Vector& Vector::operator-=(const Vector& rhs) {
 	x -= rhs.x;
 	y -= rhs.y;
 	z -= rhs.z;
 	return *this;
 }
+__host__ __device__
 Vector& Vector::operator/=(const Vector& rhs) {
 	x /= rhs.x;
 	y /= rhs.y;
 	z /= rhs.z;
 	return *this;
 }
+__host__ __device__
 Vector& Vector::operator*=(const Vector& rhs) {
 	x *= rhs.x;
 	y *= rhs.y;
 	z *= rhs.z;
 	return *this;
 }
+__host__ __device__
 Vector& Vector::operator*=(float scalar) {
 	x *= scalar;
 	y *= scalar;
 	z *= scalar;
 	return *this;
 }
+__host__ __device__
 Vector& Vector::operator/=(float scalar) {
 	x /= scalar;
 	y /= scalar;
@@ -48,44 +58,52 @@ Vector& Vector::operator/=(float scalar) {
 	return *this;
 }
 
+__host__ __device__
 Vector& Vector::operator=(const Vector& rhs) {
 	x = rhs.x;
 	y = rhs.y;
 	z = rhs.z;
 	return *this;
 }
+__host__ __device__
 Vector Vector::operator+(const Vector& rhs) const {
 	Vector _tmp(*this);
 	_tmp += rhs;
 	return _tmp;
 }
+__host__ __device__
 Vector Vector::operator-(const Vector& rhs) const {
 	Vector _tmp(*this);
 	_tmp -= rhs;
 	return _tmp;
 }
+__host__ __device__
 Vector Vector::operator*(const Vector& rhs) const {
 	Vector _tmp(*this);
 	_tmp *= rhs;
 	return _tmp;
 }
+__host__ __device__
 Vector Vector::operator/(const Vector& rhs) const {
 	Vector _tmp(*this);
 	_tmp /= rhs;
 	return _tmp;
 }
 
+__host__ __device__
 Vector Vector::operator*(float scalar) const {
 	Vector _tmp(*this);
 	_tmp *= scalar;
 	return _tmp;
 }
+__host__ __device__
 Vector operator*(float scalar, const Vector& rhs) {
 	Vector _tmp(rhs);
 	_tmp *= scalar;
 	return _tmp;
 }
 
+__host__ __device__
 Vector cross(const Vector& lhs, const Vector &rhs) {
 	return {
 		lhs.y * rhs.z - lhs.z * rhs.y,
@@ -93,6 +111,7 @@ Vector cross(const Vector& lhs, const Vector &rhs) {
 		lhs.x * rhs.y - lhs.y * rhs.x
 	};
 }
+__host__ __device__
 float dot(const Vector& lhs, const Vector &rhs) {
 	return (
 		lhs.x * rhs.x
@@ -100,9 +119,11 @@ float dot(const Vector& lhs, const Vector &rhs) {
 		+ lhs.z * rhs.z
 		);
 }
+__host__ __device__
 float length(const Vector& v) {
 	return std::sqrt(dot(v, v));
 }
+__host__ __device__
 Vector normalize(const Vector& v) {
 	float len = length(v);
 	return {

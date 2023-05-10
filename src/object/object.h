@@ -11,21 +11,25 @@ class Material;
 
 class Object {
 private:
-	std::shared_ptr<Material> m_material;
 	Vector m_position;
 	bool m_volume;
 
 protected:
+	__host__ __device__
 	Object();
-	Object(const std::shared_ptr<Material>& _mat, const Vector& _position, bool _volume);
+	__host__ __device__
+	Object(const Vector& _position, bool _volume);
+	__host__ __device__
 	Object(const Object &other);
 
 public:
-	const std::shared_ptr<Material>& material() const;
+	__host__ __device__
 	bool isVolume() const;
 
+	__host__ __device__
 	virtual float intersect(const Ray& ray) const = 0;
+	__host__ __device__
 	virtual Vector normal(const Vector &point) const = 0;
-	Vector color(Ray& ray, const Scene& scene) const;
+	__host__ __device__
 	const Vector& position() const;
 };
