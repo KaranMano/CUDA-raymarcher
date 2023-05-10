@@ -19,6 +19,7 @@ if( MSVC )
 endif()
 
 file( GLOB_RECURSE SOURCE_FILES src/* )
+list(REMOVE_ITEM SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/benchmark.cu)
 add_executable( ${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
 target_link_libraries( ${CMAKE_PROJECT_NAME}
 	PRIVATE glfw
@@ -34,4 +35,17 @@ target_include_directories( ${CMAKE_PROJECT_NAME}
 )
 	
 set_property( TARGET ${CMAKE_PROJECT_NAME} PROPERTY CXX_STANDARD 17 )
-set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+file( GLOB_RECURSE SOURCE_FILES src/* )
+list(REMOVE_ITEM SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/main.cu)
+add_executable( benchmark ${SOURCE_FILES})
+target_link_libraries( benchmark
+	PRIVATE stb
+)
+target_include_directories( benchmark
+	PRIVATE external/stb
+)
+	
+set_property( TARGET benchmark PROPERTY CXX_STANDARD 17 )
+set_target_properties(benchmark PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
