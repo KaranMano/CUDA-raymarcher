@@ -39,8 +39,8 @@ void launchKernel(unsigned char* image, Scene* scene, int blockSize) {
 }
 
 __global__
-void setupKernel(Scene *scene) {
-	Volume* volume = new Volume({ 1.0f, 1.0f, 1.0f });
+void setupKernel(Scene *scene, unsigned char* dump) {
+	Volume* volume = new Volume(dump);
 
 	scene->add((Object*)new Sphere({ 0.0f, 0.0f, -10.0f }, 6.0f, true), (Material*)volume);
 	scene->add(new Light({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 10.0));

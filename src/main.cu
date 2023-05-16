@@ -39,10 +39,18 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
-	Volume volume({ 1.0f, 1.0f, 1.0f });
+	//Volume volume({ 1.0f, 1.0f, 1.0f });
+	
+	unsigned char *dump, *d_dump;
+	size_t volumeSize = 256 * 256 * 128 * sizeof(unsigned char);
+	dump = (unsigned char*)malloc(volumeSize);
+	cudaMalloc((void **)&d_dump, volumeSize);
+	std::ifstream volume("../data/engine_256x256x128_uint8.raw");
+	volume.read((char*)dump, volumeSize);
+	cudaMemcpy(d_dump, dump, volumeSize, cudaMemcpyHostToDevice);
 
 	Scene scene(1080, 1080);
-	scene.add((Object*)new Sphere({ 0.0f, 0.0f, -10.0f }, 6.0f, true), (Material*)&volume);
+	scene.add((Object*)new Sphere({ 0.0f, 0.0f, -10.0f }, 6.0f, true), (Material*)new Volume(dump));
 	scene.add(new Light({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 10.0));
 
 	unsigned char *image, *d_image;
@@ -82,7 +90,7 @@ int main() {
 					cudaMemcpy(d_scene, &dummy, sizeof(dummy), cudaMemcpyHostToDevice);
 					cudaMalloc(&d_image, scene.camera().height()* scene.camera().width() * CHANNELS);
 					
-					setupKernel << <1, 1 >> > (d_scene);
+					setupKernel << <1, 1 >> > (d_scene, d_dump);
 					checkCudaErrors(cudaDeviceSynchronize());
 					launchKernel << <1, 1 >> > (d_image, d_scene, 16);
 					checkCudaErrors(cudaDeviceSynchronize());
@@ -162,6 +170,8 @@ int main() {
 
 	glfwTerminate();
 	free(image);
+	free(dump);
+	cudaFree(d_dump);
 	int i = 0;
 	while (scene.objects()[i] != nullptr) {
 		delete scene.objects()[i];

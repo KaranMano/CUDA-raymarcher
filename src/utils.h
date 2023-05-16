@@ -26,7 +26,7 @@ __global__
 void launchKernel(unsigned char* image, Scene* scene, int blockSize);
 
 __global__
-void setupKernel(Scene* scene);
+void setupKernel(Scene* scene, unsigned char* dump);
 
 __global__
 void cleanupKernel(Scene* scene);

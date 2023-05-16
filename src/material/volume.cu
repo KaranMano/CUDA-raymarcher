@@ -2,32 +2,42 @@
 #include <random>
 #include <functional>
 #include "cuda_noise.cuh"
+#include "sampler.cuh"
 
 using namespace std;
 
 __host__ __device__
 Volume::Volume() :
 	Material(),
+	m_dump(nullptr),
+	m_color(1.0f, 1.0f, 1.0f)
+{}
+__host__ __device__
+Volume::Volume(unsigned char *_dump) :
+	Material(),
+	m_dump(_dump),
 	m_color(1.0f, 1.0f, 1.0f)
 {}
 __host__ __device__
 Volume::Volume(const Vector &_color) :
 	Material(),
+	m_dump(nullptr),
 	m_color(_color)
 {}
 __host__ __device__
 Volume::Volume(const Volume &other) :
-	Material(other)
+	Material(other),
+	m_dump(nullptr)
 {}
 
 __host__ __device__
 float Volume::density(const Vector& point) const {
-#ifdef __CUDA_ARCH__
-	float3 pos = make_float3(point.x, point.y, point.z);
-	return max(cudaNoise::simplexNoise(pos, 1.0f, 100), 0.0f);
-#else
-	return max(cudaNoise::cpuNoise::simplexNoise(point, 1.0f, 100), 0.0f);;
-#endif
+//#ifdef __CUDA_ARCH__
+//	float3 pos = make_float3(point.x, point.y, point.z);
+//	return max(cudaNoise::simplexNoise(pos, 1.0f, 100), 0.0f);
+//#else
+	return sampler::sample(point, m_dump, 42.0f);
+//#endif
 }
 
 //! move g to volume property
@@ -60,7 +70,7 @@ Vector Volume::shade(Ray& ray, const Object& object, Scene& scene) const {
 	bool inVolume = true;
 	ray.origin(ray.hit() + 0.001f * ray.direction()); // moving origin into the volume from the surface
 	while (inVolume) {
-		float density = this->density(ray.origin());
+		float density = this->density(ray.origin() - object.position());
 		transmittance *= exp(-stepSize * density * (absorptionCoeff + scatteringCoeff));
 
 		int i = 0;
