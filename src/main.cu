@@ -21,7 +21,7 @@ int main() {
 	const char* glsl_version = "#version 130";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-	GLFWwindow* window = glfwCreateWindow(500, 500, "image-morphing", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(500, 500, "volume-renderer", NULL, NULL);
 
 	if (!window) {
 		glfwTerminate();
@@ -42,10 +42,10 @@ int main() {
 	//Volume volume({ 1.0f, 1.0f, 1.0f });
 	
 	unsigned char *dump, *d_dump;
-	size_t volumeSize = 256 * 256 * 128 * sizeof(unsigned char);
+	size_t volumeSize = 256 * 256 * 256 * sizeof(unsigned char);
 	dump = (unsigned char*)malloc(volumeSize);
 	cudaMalloc((void **)&d_dump, volumeSize);
-	std::ifstream volume("../data/engine_256x256x128_uint8.raw");
+	std::ifstream volume("../data/foot_256x256x256_uint8.raw");
 	volume.read((char*)dump, volumeSize);
 	cudaMemcpy(d_dump, dump, volumeSize, cudaMemcpyHostToDevice);
 

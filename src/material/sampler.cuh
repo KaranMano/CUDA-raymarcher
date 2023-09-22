@@ -8,7 +8,7 @@
 namespace sampler {
 	__host__ __device__
 	float sample(const Vector &point, unsigned char *dump, float scale) {
-		int dimX = 128, dimY = 256, dimZ = 256;
+		int dimX = 256, dimY = 256, dimZ = 256;
 		unsigned char isovalue = 12;
 		bool isoRender = false;
 
